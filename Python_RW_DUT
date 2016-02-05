@@ -1,0 +1,109 @@
+def write_arduino(address,data):
+    ser.write('w')
+    ser.write(address[0])
+    ser.write(address[1])
+    ser.write(data[0])
+    ser.write(data[1])
+    ser.write('\n')
+    
+def read_arduino(address):
+    ser.write('r')
+    ser.write(address[0])
+    ser.write(address[1])
+    ser.write('\n') 
+    flag = ser.read()
+    result = 0
+    if flag=='1':
+        result = hex(ord(ser.read()))
+    print result    
+       
+import serial
+import time
+ser = serial.Serial(12,9600)
+time.sleep(2) 
+
+
+write_arduino('5f','80')
+time.sleep(1)
+read_arduino('23')
+time.sleep(1)
+read_arduino('24')
+time.sleep(1)
+read_arduino('25')
+time.sleep(1)
+read_arduino('26')
+time.sleep(1)
+
+write_arduino('fd','23')
+time.sleep(1)
+write_arduino('fe','11')
+time.sleep(1)
+write_arduino('fc','01')
+time.sleep(1)
+
+write_arduino('fd','24')
+time.sleep(1)
+write_arduino('fe','22')
+time.sleep(1)
+write_arduino('fc','01')
+time.sleep(1)
+
+write_arduino('fd','25')
+time.sleep(1)
+write_arduino('fe','33')
+time.sleep(1)
+write_arduino('fc','01')
+time.sleep(1)
+
+write_arduino('fd','26')
+time.sleep(1)
+write_arduino('fe','44')
+time.sleep(1)
+write_arduino('fc','01')
+time.sleep(1)
+
+write_arduino('fd','23')
+time.sleep(1)
+write_arduino('fc','02')
+time.sleep(1)
+print 'Remote address 23 read value is:'
+read_arduino('ff')
+time.sleep(1)
+print 'local address 23 read value is:'
+read_arduino('23')
+time.sleep(1)
+
+
+write_arduino('fd','24')
+time.sleep(1)
+write_arduino('fc','02')
+time.sleep(1)
+print 'Remote address 24 read value is:'
+read_arduino('ff')
+time.sleep(1)
+print 'local address 24 read value is:'
+read_arduino('24')
+time.sleep(1)
+
+write_arduino('fd','25')
+time.sleep(1)
+write_arduino('fc','02')
+time.sleep(1)
+print 'Remote address 25 read value is:'
+read_arduino('ff')
+time.sleep(1)
+print 'local address 25 read value is:'
+read_arduino('25')
+time.sleep(1)
+
+write_arduino('fd','26')
+time.sleep(1)
+write_arduino('fc','02')
+time.sleep(1)
+print 'Remote address 26 read value is:'
+read_arduino('ff')
+time.sleep(1)
+print 'local address 26 read value is:'
+read_arduino('26')
+time.sleep(1)
+ser.close()
