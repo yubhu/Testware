@@ -1,0 +1,79 @@
+#include <Wire.h>
+const byte DUT_ID = 0x7c;
+byte return_value;
+byte address = 0;
+byte data_input = 0;
+void setup(){
+  Serial.begin(9600);
+  Wire.begin();
+}
+
+void loop(){
+  while(Serial.available()){
+    char ch = Serial.read();
+    if(ch=='r'){
+      while(Serial.available()){
+        char ch = Serial.read();
+        if(ch>='0'&&ch<='9'){
+          address = (address<<4)|(ch-'0');
+        }
+        else if(ch>='a'&&ch<='f'){
+          address = (address<<4)|(ch-87);
+        }
+        else{
+          return_value = DUT_Read(address);
+          Serial.write('1');
+          Serial.write(return_value);
+          address = 0;
+         }
+      }    
+    }
+    else if(ch=='w'){
+      for(int count =0;count<2;count++){
+        char ch = Serial.read();
+        if(ch>='0'&&ch<='9'){
+          address = (address<<4)|(ch-'0');
+        }
+        else if(ch>='a'&&ch<='f'){
+          address = (address<<4)|(ch-87);
+        }
+      }
+      for(int count =0;count<2;count++){
+        char ch = Serial.read();
+        if(ch>='0'&&ch<='9'){
+          data_input = (data_input<<4)|(ch-'0');
+        }
+        else if(ch>='a'&&ch<='f'){
+          data_input = (data_input<<4)|(ch-87);
+        }
+      }
+      int result = DUT_Write(address,data_input);
+      address = 0;
+      data_input = 0;
+      result = 0;
+    }    
+  }
+  delay(1000);
+}
+
+byte DUT_Read(byte address){
+  byte data;
+  Wire.beginTransmission(DUT_ID);
+  Wire.write(address);
+  Wire.endTransmission();
+  Wire.requestFrom(DUT_ID,(byte)1);
+  while(Wire.available() == 0) // wait for data
+    ;
+  data = Wire.read();
+  return data;
+}
+
+int DUT_Write(byte address, byte data)
+{
+  int result;
+  Wire.beginTransmission(DUT_ID);
+  Wire.write(address);
+  Wire.write(data);
+  result = Wire.endTransmission(1);
+  return result;
+}
