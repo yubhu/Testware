@@ -1,0 +1,85 @@
+import os
+import subprocess
+import time
+import shutdown
+
+usbtree_addr = r'C:\Users\yubo\Desktop\usbtreeview\x64\UsbTreeView.exe'
+usbtree_report_addr = r'C:\Users\yubo\Desktop\usb_test\usbtreereport.txt'
+report = open('result.txt','w')
+#os.system(r'%windir%\system32\rundll32.exe powrprof.dll,SetSuspendState Hibernate')
+#os.system(r'%windir%\system32\rundll32.exe powrprof.dll,SetSuspendState Sleep')
+report.write('Start Sleep test!')
+report.write('\n')
+for i in range(3):
+    result = 1
+    result = os.system(r'%windir%\system32\rundll32.exe powrprof.dll,SetSuspendState Sleep')
+    if not result:
+        time.sleep(10)
+        subprocess.call([usbtree_addr ,'-R:'+usbtree_report_addr])
+        f = open(usbtree_report_addr)
+        lines = f.readlines()
+        for line in lines:
+            if 'Device Description       : USB Mass Storage Device' in line:
+                start_pos = lines.index(line)
+                end_pos1 = start_pos + 40
+                end_pos2 = start_pos + 41
+                end_pos3 = start_pos + 42
+                if '1' in lines[end_pos3]:
+                    report.write('SS device detected at Sleep test times %d\n' %i)
+                    f.close()
+                    break
+                elif '1' in lines[end_pos2]:
+                    report.write('HS device detected at Sleep test times %d\n' %i)
+                    f.close()
+                    break
+                elif '1' in lines[end_pos1]:
+                    report.write('FS device detected at Sleep test times %d\n' %i)
+                    f.close()
+                    break
+                else:
+                    pass
+            else:
+                continue               
+        else:
+            report.write('U disk not found!\n')
+            f.close()                    
+        
+report.write('Start Hibernate test!')
+report.write('\n')   
+for i in range(3):
+    result = 1
+    result = os.system(r'%windir%\system32\rundll32.exe powrprof.dll,SetSuspendState Hibernate')
+    if not result:
+        time.sleep(10)
+        subprocess.call([usbtree_addr ,'-R:'+usbtree_report_addr])
+        f = open(usbtree_report_addr)
+        lines = f.readlines()
+        for line in lines:
+            if 'Device Description       : USB Mass Storage Device' in line:
+                start_pos = lines.index(line)
+                end_pos1 = start_pos + 40
+                end_pos2 = start_pos + 41
+                end_pos3 = start_pos + 42
+                if '1' in lines[end_pos3]:
+                    report.write('SS device detected at Sleep test times %d\n' %i)
+                    f.close()
+                    break
+                elif '1' in lines[end_pos2]:
+                    report.write('HS device detected at Sleep test times %d\n' %i)
+                    f.close()
+                    break
+                elif '1' in lines[end_pos1]:
+                    report.write('FS device detected at Sleep test times %d\n' %i)
+                    f.close()
+                    break     
+                else:
+                    pass
+            else:
+                continue               
+        else:
+            report.write('U disk not found!\n')
+            f.close()                                           
+report.write('Start Reboot test!')
+report.write('\n')
+report.close()
+shutdown.RebootServer(timeout=5, bForce=1, bReboot=1)
