@@ -1,0 +1,16 @@
+from bs4 import BeautifulSoup
+import html5lib
+from urllib2 import urlopen
+import re
+
+url_addr = 'http://xinsheng.huawei.com/cn/index.php?app=forum&mod=Detail&act=index&id=2778481&auther=1&maskId=982327'
+html = urlopen(url_addr)
+bsObj = BeautifulSoup(html,'html5lib')
+
+record = open('record_huawei.txt','w')
+item = bsObj.find('div',{'class':'bbs_info_right_text breakword'})
+for p in item.findAll('p'):
+    line = p.get_text()
+    record.write(line.encode('GBK','ignore')) 
+    record.write('\n')   
+record.close()
