@@ -1,0 +1,107 @@
+from selenium import webdriver
+from bs4 import BeautifulSoup
+import re
+import matplotlib.pyplot as plot
+import time
+
+base_addr = 'http://q.stock.sohu.com/zs/000001/lshq.shtml'
+
+def check_website(url,start,end):
+    driver = webdriver.PhantomJS(executable_path=r"D:\tools\phantomjs-2.0.0-windows\bin\phantomjs.exe")
+    driver.get(url)
+    start_date = driver.find_element_by_id('BIZ_lshq_sd')
+    end_date = driver.find_element_by_id('BIZ_lshq_ed')
+    start_date.clear()
+    start_date.send_keys(start)
+    end_date.clear()
+    end_date.send_keys(end)
+    for item in driver.find_elements_by_tag_name('input'):
+        pass
+    item.click()
+    time.sleep(3)
+    return driver
+
+def gather_data(input_driver):
+    pagesource = input_driver.page_source
+    bsObj = BeautifulSoup(pagesource)
+    price = []
+    volume = []
+    date = []
+    pattern = re.compile('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+    for item in bsObj.findAll('td',{'class':'e1'}):
+        if pattern.match(item.get_text()):
+            date.append(str(item.get_text()))
+            tr = item.parent()
+            price.append(float(str(tr[2].get_text())))
+            volume.append(str(tr[7].get_text()))
+    return price,volume,date
+
+def process_data(price_data,volume_data,date_data,year):
+    price_data.reverse()
+    volume_data.reverse()
+    date_data.reverse()
+    temp = zip(date_data,price_data,volume_data)
+    date_p = []
+    price_p = []
+    volume_p = []
+    for item in temp:
+        if item[0][:4] == year:
+            date = item[0][5:]
+            date = date.replace('-','.')
+            date = float(date)
+            date_p.append(date) 
+            price_p.append(item[1])
+            volume = float(item[2])
+            volume = volume/1e6
+            volume_p.append(volume) 
+    return price_p,volume_p,date_p
+
+def make_plot(price,volume,date=None):
+    plot.figure()
+    if date==None:
+        volume_p = []
+        for item in volume:
+            volume_p.append(float(item)/1e6)
+        plot.plot(price)
+        plot.plot(volume_p)
+    else:
+        plot.plot(date,price)
+        plot.plot(date,volume)
+
+def stock_plot_year(stock_code,year):
+    if stock_code == '000001':
+        url_addr = base_addr
+    else:
+        url_addr = 'http://q.stock.sohu.com/cn/'+stock_code+'/lshq.shtml'
+    localtime = time.localtime()
+    if str(localtime.tm_year) == year:
+        start = year+'-'+'01'+'-'+'01'
+        end = year + '-'+str(localtime.tm_mon).zfill(2)+'-'+str(localtime.tm_mday).zfill(2)
+    else:
+        start = year+'-'+'01'+'-'+'01'
+        end = year +'-'+'12'+'-'+'31'
+    driver = check_website(url_addr,start,end)
+    price_raw,volume_raw,date_raw = gather_data(driver)
+    price_p,volume_p,date_p = process_data(price_raw,volume_raw,date_raw,year)
+    make_plot(price_p,volume_p,date_p)
+    driver.quit()
+    
+def stock_plot_years(stock_code,years):
+    if stock_code == '000001':
+        url_addr = base_addr
+    else:
+        url_addr = 'http://q.stock.sohu.com/cn/'+stock_code+'/lshq.shtml'
+    localtime = time.localtime()
+    start = '2000'+'-'+'01'+'-'+'01'
+    end = str(localtime.tm_year) +'-'+'12'+'-'+'31'
+    driver = check_website(url_addr,start,end)
+    price_raw,volume_raw,date_raw = gather_data(driver)
+    price_raw.reverse()
+    volume_raw.reverse()
+    date_raw.reverse()
+    trading_days = years*245
+    make_plot(price_raw[-trading_days:],volume_raw[-trading_days:])
+    driver.quit()
+    
+stock_plot_year('000001','2014')   
+#stock_plot_years('000001',2)
