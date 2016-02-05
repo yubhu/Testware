@@ -1,0 +1,39 @@
+from urllib2 import urlopen
+from urllib import urlretrieve
+from bs4 import BeautifulSoup
+import re
+import time
+
+base_addr = r'https://bbs.sjtu.edu.cn/'
+base_dir = r'D:\pythonstudy\webscraping\yinshuisiyuan_pic'
+
+def download_pic(url_address):
+    absolute_url = base_addr+url_address
+    print absolute_url
+    try:
+        html = urlopen(absolute_url)
+        html_string = html.read()
+        html_proc = html_string.replace('<td>','<td/>')
+        html_proc = html_proc.replace('<tr>','<tr/>')
+    except:
+        return
+    bsObj = BeautifulSoup(html_proc)
+    for item in bsObj.find('table',{'width':'610'}).findAll(href=re.compile('^bbs.{3},')):
+        address = item.attrs['href']
+        download_pic(str(address))
+    for item in bsObj.findAll('img'):
+        img_address = item.attrs['src']
+        if img_address.startswith('/file/LoveBridge/'):
+            img_abs_address = base_addr+img_address
+            img_name = img_address[17:]
+            print img_name
+            save_dir = base_dir+'\\'+img_name
+            try:
+                urlretrieve(img_abs_address,save_dir)
+            except:
+                pass
+            time.sleep(1)
+    return
+
+    
+download_pic('bbs0an,path,%2Fgroups%2FGROUP_8%2FLoveBridge%2Ffwantm.html')
