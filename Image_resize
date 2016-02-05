@@ -1,0 +1,16 @@
+from PIL import Image
+import os
+
+before_dir = r'C:\Users\yhu\Desktop\imageprocess\before'
+after_dir = r'C:\Users\yhu\Desktop\imageprocess\after'
+
+for dirpath,dirnames,filenames in os.walk(before_dir):
+    for item in filenames:
+        if item[-4:] == '.jpg' or item[-4:] == '.JPG':
+            full_name = dirpath+'\\'+item
+            img = Image.open(full_name)
+            width,height = img.size
+            new_img = img.resize((int(width*0.3),int(height*0.3)))
+            new_img.save(after_dir+'\\'+item)   
+            img.close()
+            new_img.close()
