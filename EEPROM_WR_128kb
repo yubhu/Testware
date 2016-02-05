@@ -1,0 +1,99 @@
+#include <Wire.h>
+const byte DUT_ID = 0x51;
+int test_result;
+int test_times;
+void setup(){
+  Serial.begin(9600);
+  Wire.begin();
+  Serial.println("Now start EEPROM Write/Read test, test will repeat 10 times and will print when error occurs.");
+  for(test_times=0;test_times<2;test_times++){
+    test_result = write_read_1K();
+    if(!test_result){
+      Serial.print("Test Failed at times:");
+      Serial.println(test_times);
+      break;
+    }
+  }
+  if(test_times==2){
+    Serial.println("Test Success!");
+  }  
+}  
+
+void loop(){
+}
+
+int write_read_1K(){
+  byte data_input = 0;
+  byte data_output;
+  int write_address;
+  int read_address;
+  int result = 0;
+  int write_result;
+  Serial.println("Start EEPROM write test!");
+  for(write_address=0;write_address<1024;write_address++){
+    delay(5);
+    write_result = eeprom_write(write_address,data_input);
+    if(!write_result){
+      data_input++;
+    }
+    else{
+      Serial.print("Write error at:");
+      Serial.println(write_address);
+      break;
+    }
+    if(data_input==256){
+      data_input = 0;
+    }
+  }
+  data_input = 0;
+  if(write_address==1024){
+    Serial.println("Write success now start read data!");
+    delay(5000);
+    for(read_address=0;read_address<1024;read_address++){
+      delay(5);
+      data_output = eeprom_read(read_address);
+      if(data_output!=data_input){
+        Serial.print("Error at address:");
+        Serial.println(read_address);
+        break;
+      }
+      data_input++;
+      if(data_input==256){
+        data_input = 0;
+      }
+    }
+    if(read_address==1024){
+      Serial.println("Success!");
+      result = 1;
+    }
+  } 
+ return result; 
+}
+
+
+int eeprom_write(int address,byte data){
+  int result;
+  byte highaddress = highByte(address);
+  byte lowaddress = lowByte(address);
+  Wire.beginTransmission(DUT_ID);
+  Wire.write(highaddress);
+  Wire.write(lowaddress);
+  Wire.write(data);
+  result = Wire.endTransmission();
+  return result;
+}
+
+byte eeprom_read(int address ){
+  byte data;
+  byte highaddress = highByte(address);
+  byte lowaddress = lowByte(address);
+  Wire.beginTransmission(DUT_ID);
+  Wire.write(highaddress);
+  Wire.write(lowaddress);
+  Wire.endTransmission();
+  Wire.requestFrom(DUT_ID,(byte)1);
+  while(Wire.available() == 0) // wait for data
+    ;
+  data = Wire.read();
+  return data;
+}
