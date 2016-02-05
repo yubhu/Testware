@@ -1,0 +1,57 @@
+import re
+import csv
+f_ssd = open('slingshot_d_fpga_top.txt')
+f_ssv = open('slingshot_v_fpga_top.txt')
+d_ssd = {}
+d_ssv = {}
+for line in f_ssd:
+    if line.startswith('Net') and 'LOC' in line:
+        line_p = re.sub(' +','',line)
+        netname_start_position = line_p.index('"')
+        line_sliced = line_p[netname_start_position+1:]
+        netname_stop_position = line_sliced.index('"')
+        net_name = line_sliced[:netname_stop_position]
+        pattern_position = re.compile('(LOC=[\w]{2,4})')
+        position_find = pattern_position.search(line_p)
+        position = position_find.group()[4:]
+        d_ssd[net_name] = position
+
+ 
+for line in f_ssv:
+    if line.startswith('define_attribute') and 'xc_loc' in line:
+        line_p = re.sub(' +','',line)
+        pattern_netname = re.compile('p:((?!}).)+')
+        net_name = pattern_netname.search(line_p).group()[2:]
+        pattern_loc = re.compile('{.+}{.+}{(.+)}$')
+        position = pattern_loc.search(line_p).group(1)
+        d_ssv[net_name] = position
+
+csv_compare_f = open('csv_compare.csv','w')
+try:
+    writer = csv.writer(csv_compare_f)
+    writer.writerow(('net_name','htg_platform','v6_platform'))
+    for key in d_ssd.keys():
+        try:
+            writer.writerow((key,d_ssd[key],d_ssv[key]))
+        except:
+            print '%s not found in ssv!' %key
+finally:
+    csv_compare_f.close()
+
+new_f_ssd = open('slingshot_d_fpga_top_new.txt','w')
+f_ssd.seek(0)
+
+for line in f_ssd:
+    if line.startswith('Net') and 'LOC' in line:
+        for key in d_ssv.keys():
+            if key in line:
+                new_f_ssd.write(line.replace(d_ssd[key],d_ssv[key]))
+                break
+        else:
+            new_f_ssd.write(line)
+    else:
+        new_f_ssd.write(line)
+
+f_ssd.close()
+f_ssv.close() 
+new_f_ssd.close()
