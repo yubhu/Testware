@@ -1,0 +1,57 @@
+import time
+import threading
+import os
+import shutil
+
+
+class ThreadClass(threading.Thread):
+    # Override Thread's __init__ method to accept the parameters needed:
+    def __init__ ( self,source,dest,filename):
+	self.source = source
+	self.dest = dest
+	self.filename = filename
+	threading.Thread.__init__ ( self )
+
+    def run(self):
+	now = time.ctime()
+	print now
+	print 'Transferring file from %s to %s' %(self.source,self.dest)
+	try:
+	    xferfile(self.source,self.dest,self.filename)
+	except:
+	    print 'Error!'
+	
+def initfile(disk,filename):
+    if os.path.exists(disk+':\\'+filename):
+	if os.stat(disk+':\\'+filename).st_size!=524288000L:
+	    os.remove(disk+':\\'+filename)
+	    shutil.copy('c:\\'+filename,disk+':')
+        else:
+	    return
+    else:
+	shutil.copy('c:\\'+filename,disk+':')
+    
+    
+def xferfile(source,dest,filename):
+    shutil.copy(source+':\\'+filename,dest+':')
+
+disk_numbers = input('Please input how many disks to test(1 or 2):')
+
+if disk_numbers ==2:
+    disk1 = raw_input('Please input the disk1:')
+    disk2 = raw_input('Please input the disk2:')
+    initfile(disk1,'test1.tmp')
+    initfile(disk2,'test2.tmp')    
+    commands = [[disk1,disk2,'test1.tmp'],[disk2,disk1,'test2.tmp']]
+    for source,dest,filename in commands:
+	t = ThreadClass(source,dest,filename)
+        t.start()
+else:
+    disk = raw_input('Please input the disk:')
+    initfile(disk,'test2.tmp')
+    initfile('d','test1.tmp')   
+    commands = [['d',disk,'test1.tmp'],[disk,'d','test2.tmp']]
+    for source,dest,filename in commands:
+	t = ThreadClass(source,dest,filename)
+	t.start()  
+	
